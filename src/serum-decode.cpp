@@ -599,6 +599,7 @@ uint32_t lastframe_full_crc_scene = 0;
 bool first_match_normal = true;
 bool first_match_scene = true;
 uint32_t lastframe_found = GetMonotonicTimeMs();
+bool unknown_frame_found = false;
 uint32_t lastTriggerID = 0xffffffff;  // last trigger ID found
 uint32_t lasttriggerTimestamp = 0;
 bool isrotation = true;     // are there rotations to send
@@ -1579,6 +1580,7 @@ void Serum_free(void) {
   lastframe_full_crc_scene = 0;
   first_match_normal = true;
   first_match_scene = true;
+  unknown_frame_found = false;
   sceneEndHoldUntilMs = 0;
   sceneEndHoldDurationMs = 0;
   sceneNextFrameAtMs = 0;
@@ -5351,7 +5353,7 @@ uint32_t Serum_ColorizeWithMetadatav1(uint8_t* frame) {
     if (g_serumData.triggerIDs[lastfound][0] > 0xff98)
       g_serumData.triggerIDs[lastfound][0] = 0xffffffff;
 
-    lastframe_found = now;
+    unknown_frame_found = false;
     if (maxFramesToSkip) {
       framesSkippedCounter = 0;
     }
@@ -5445,6 +5447,11 @@ uint32_t Serum_ColorizeWithMetadatav1(uint8_t* frame) {
   }
 
   mySerum.triggerID = 0xffffffff;
+
+  if (frameID == IDENTIFY_NO_FRAME && !unknown_frame_found) {
+    lastframe_found = now;
+    unknown_frame_found = true;
+  }
 
   if (monochromeMode ||
       (ignoreUnknownFramesTimeout &&
@@ -5709,7 +5716,7 @@ static uint32_t Serum_ColorizeWithMetadatav2Internal(uint8_t* frame,
     }
 
     // frame identified
-    lastframe_found = now;
+    if (!sceneFrameRequested) unknown_frame_found = false;
     if (maxFramesToSkip) {
       framesSkippedCounter = 0;
     }
@@ -6151,6 +6158,12 @@ static uint32_t Serum_ColorizeWithMetadatav2Internal(uint8_t* frame,
   }
 
   mySerum.triggerID = 0xffffffff;
+
+  if (!sceneFrameRequested && frameID == IDENTIFY_NO_FRAME &&
+      !unknown_frame_found) {
+    lastframe_found = now;
+    unknown_frame_found = true;
+  }
 
   if (monochromeMode || monochromePaletteMode ||
       (ignoreUnknownFramesTimeout &&

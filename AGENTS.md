@@ -252,6 +252,14 @@ Behavior:
   colorizer.
 - Legacy same-frame behavior (`IDENTIFY_SAME_FRAME`) is preserved with full-frame CRC check.
 
+Unknown-frame timeout state:
+- `lastframe_found` timestamps the first consecutive unknown normal input, not
+  the most recent legitimate frame.
+- The timestamp is set once when normal identification returns
+  `IDENTIFY_NO_FRAME`, remains unchanged while unknown inputs continue, and is
+  cleared when a legitimate normal frame is accepted. Scene-render requests do
+  not arm this unknown-input timeout.
+
 Return values:
 - `IDENTIFY_NO_FRAME` when no match.
 - `IDENTIFY_SAME_FRAME` when same frame detected with same full CRC.
